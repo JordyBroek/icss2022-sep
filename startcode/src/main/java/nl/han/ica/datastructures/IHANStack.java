@@ -19,3 +19,4 @@ public interface IHANStack<T> {
      */
     T peek();
 }
+

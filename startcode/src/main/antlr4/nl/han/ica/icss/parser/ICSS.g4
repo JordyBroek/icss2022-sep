@@ -41,36 +41,31 @@ MIN: '-';
 MUL: '*';
 ASSIGNMENT_OPERATOR: ':=';
 
-
-
+// EQUAL_OPERATOR: '==';
+// GREATER_OPERATOR: '>';
+// LESSER_OPERATOR: '<';
+// TODO: Vraag of Lexer aangepast mag worden
 
 //--- PARSER: ---
-stylesheet: stylerule* | statement* EOF;
-
+stylesheet: stylerule* EOF;
 stylerule: selector OPEN_BRACE blockstatement CLOSE_BRACE;
 
-selector
-  : ID_IDENT | CLASS_IDENT | LOWER_IDENT | CAPITAL_IDENT;
+selector: ID_IDENT | CLASS_IDENT | LOWER_IDENT | CAPITAL_IDENT;
 
 blockstatement: statement*;
 
 statement: declaration | variableAssignment | conditional | expression;
 
 declaration: CAPITAL_IDENT ASSIGNMENT_OPERATOR expression SEMICOLON;
-
 variableAssignment: LOWER_IDENT ASSIGNMENT_OPERATOR expression SEMICOLON;
-
 conditional: IF BOX_BRACKET_OPEN expression BOX_BRACKET_CLOSE OPEN_BRACE blockstatement CLOSE_BRACE (ELSE OPEN_BRACE blockstatement CLOSE_BRACE)?;
+expression: term ((PLUS | MIN) term)*;
 
-expression: calcliteral | variableReference | expression operator expression;
+term: factor ((MUL) factor)*;
+factor: literal | variableReference | '(' expression ')';
 
-calcliteral: PIXELSIZE | PERCENTAGE | SCALAR;
-
-literal: | COLOR | TRUE | FALSE;
-
+literal: PIXELSIZE | PERCENTAGE | SCALAR | COLOR | TRUE | FALSE;
 variableReference: LOWER_IDENT;
-
-operator: PLUS | MIN | MUL;
 
 
 
