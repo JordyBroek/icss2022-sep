@@ -96,6 +96,4 @@ public class ASTListener extends ICSSBaseListener {
 		currentContainer.peek().addChild(varAssign);
 		enterNode(varAssign);
 	}
-
-
 }

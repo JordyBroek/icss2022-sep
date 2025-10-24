@@ -40,11 +40,9 @@ PLUS: '+';
 MIN: '-';
 MUL: '*';
 ASSIGNMENT_OPERATOR: ':=';
-
-// EQUAL_OPERATOR: '==';
-// GREATER_OPERATOR: '>';
-// LESSER_OPERATOR: '<';
-// TODO: Vraag of Lexer aangepast mag worden
+ EQUAL_OPERATOR: '==';
+ GREATER_OPERATOR: '>';
+ LESSER_OPERATOR: '<';
 
 //--- PARSER: ---
 stylesheet: stylerule* EOF;
@@ -58,13 +56,19 @@ statement: declaration | variableAssignment | conditional | expression;
 
 declaration: CAPITAL_IDENT ASSIGNMENT_OPERATOR expression SEMICOLON;
 variableAssignment: LOWER_IDENT ASSIGNMENT_OPERATOR expression SEMICOLON;
-conditional: IF BOX_BRACKET_OPEN expression BOX_BRACKET_CLOSE OPEN_BRACE blockstatement CLOSE_BRACE (ELSE OPEN_BRACE blockstatement CLOSE_BRACE)?;
+conditional: IF BOX_BRACKET_OPEN conditionExpression BOX_BRACKET_CLOSE
+        OPEN_BRACE blockstatement CLOSE_BRACE
+        (ELSE OPEN_BRACE blockstatement CLOSE_BRACE)?;
+
+conditionExpression: booleanLiteral | comparisonExpression | '(' conditionExpression ')';
+comparisonExpression: expression (EQUAL_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR) expression;
+
 expression: term ((PLUS | MIN) term)*;
-
 term: factor ((MUL) factor)*;
-factor: literal | variableReference | '(' expression ')';
+factor: literal | variableReference | booleanLiteral | '(' expression ')';
 
-literal: PIXELSIZE | PERCENTAGE | SCALAR | COLOR | TRUE | FALSE;
+booleanLiteral: TRUE | FALSE;
+literal: PIXELSIZE | PERCENTAGE | SCALAR | COLOR;
 variableReference: LOWER_IDENT;
 
 
