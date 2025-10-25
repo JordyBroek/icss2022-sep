@@ -50,14 +50,16 @@ ASSIGNMENT_OPERATOR: ':=';
 stylesheet: stylerule* EOF;
 stylerule: selector OPEN_BRACE blockstatement CLOSE_BRACE;
 
-selector: ID_IDENT | CLASS_IDENT | LOWER_IDENT | CAPITAL_IDENT;
+selector: ID_IDENT | CLASS_IDENT | LOWER_IDENT;
+
 
 // Body
 blockstatement: statement*;
 statement: declaration | variableAssignment | conditional | expression;
 
-declaration: CAPITAL_IDENT ASSIGNMENT_OPERATOR expression SEMICOLON;
-variableAssignment: LOWER_IDENT ASSIGNMENT_OPERATOR expression SEMICOLON;
+declaration: LOWER_IDENT COLON expression SEMICOLON;
+variableAssignment: (LOWER_IDENT | CAPITAL_IDENT) ASSIGNMENT_OPERATOR expression SEMICOLON;
+
 conditional: IF BOX_BRACKET_OPEN conditionExpression BOX_BRACKET_CLOSE
         OPEN_BRACE blockstatement CLOSE_BRACE
         (ELSE OPEN_BRACE blockstatement CLOSE_BRACE)?;

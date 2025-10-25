@@ -1,8 +1,5 @@
 package nl.han.ica.icss.parser;
 
-import java.util.Stack;
-
-
 import nl.han.ica.datastructures.IHANStack;
 import nl.han.ica.icss.ast.*;
 import nl.han.ica.icss.ast.literals.*;
@@ -10,7 +7,6 @@ import nl.han.ica.icss.ast.operations.*;
 import nl.han.ica.icss.ast.selectors.ClassSelector;
 import nl.han.ica.icss.ast.selectors.IdSelector;
 import nl.han.ica.icss.ast.selectors.TagSelector;
-import org.antlr.v4.runtime.Token;
 
 /**
  * This class extracts the ICSS Abstract Syntax Tree from the Antlr Parse tree.
@@ -62,8 +58,6 @@ public class ASTListener extends ICSSBaseListener {
 			selector = new ClassSelector(selectorCtx.CLASS_IDENT().getText());
 		} else if (selectorCtx.LOWER_IDENT() != null) {
 			selector = new TagSelector(selectorCtx.LOWER_IDENT().getText());
-		} else if (selectorCtx.CAPITAL_IDENT() != null) {
-			selector = new TagSelector(selectorCtx.CAPITAL_IDENT().getText());
 		}
 
 		if (selector != null) {
@@ -80,50 +74,53 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	@Override
-	public void exitDeclaration(ICSSParser.DeclarationContext ctx) {
+	public void enterDeclaration(ICSSParser.DeclarationContext ctx) {
 		Declaration decl = new Declaration();
-		decl.property = new PropertyName(ctx.CAPITAL_IDENT().getText());
+		decl.property = new PropertyName(ctx.LOWER_IDENT().getText());
 		currentContainer.peek().addChild(decl);
 		enterNode(decl);
 	}
 
 	@Override
-	public void exitVariableAssignment(ICSSParser.VariableAssignmentContext ctx) {
-		VariableAssignment varAssign = new VariableAssignment();
-		varAssign.name = new VariableReference(ctx.LOWER_IDENT().getText());
-		currentContainer.peek().addChild(varAssign);
-		enterNode(varAssign);
+	public void exitDeclaration(ICSSParser.DeclarationContext ctx) {
+		exitNode();
 	}
 
+	@Override
+	public void exitVariableAssignment(ICSSParser.VariableAssignmentContext ctx) {
+		VariableAssignment varAssign = new VariableAssignment();
+		String varName = ctx.LOWER_IDENT() != null
+				? ctx.LOWER_IDENT().getText()
+				: ctx.CAPITAL_IDENT().getText();
+		varAssign.name = new VariableReference(varName);
+		currentContainer.peek().addChild(varAssign);
+		enterNode(varAssign);
+		exitNode();
+	}
 
 	@Override
 	public void exitExpression(ICSSParser.ExpressionContext ctx) {
 		Expression left = buildTerm(ctx.term(0));
-
 		for (int i = 1; i < ctx.term().size(); i++) {
 			Expression right = buildTerm(ctx.term(i));
 			String operator = ctx.getChild(2 * i - 1).getText();
-
 			Operation opNode = null;
 			if (operator.equals("+")) {
 				opNode = new AddOperation();
 			} else if (operator.equals("-")) {
 				opNode = new SubtractOperation();
 			}
-
 			if (opNode != null) {
 				opNode.addChild(left);
 				opNode.addChild(right);
 				left = opNode;
 			}
 		}
-
 		currentContainer.peek().addChild(left);
 	}
 
 	private Expression buildTerm(ICSSParser.TermContext ctx) {
 		Expression left = buildFactor(ctx.factor(0));
-
 		for (int i = 1; i < ctx.factor().size(); i++) {
 			Expression right = buildFactor(ctx.factor(i));
 			MultiplyOperation op = new MultiplyOperation();
@@ -131,7 +128,6 @@ public class ASTListener extends ICSSBaseListener {
 			op.addChild(right);
 			left = op;
 		}
-
 		return left;
 	}
 
@@ -181,7 +177,6 @@ public class ASTListener extends ICSSBaseListener {
 		Expression left = buildExpression(ctx.expression(0));
 		Expression right = buildExpression(ctx.expression(1));
 		String operator = ctx.getChild(1).getText();
-
 		Operation opNode = null;
 		switch (operator) {
 			case "==":
@@ -194,7 +189,6 @@ public class ASTListener extends ICSSBaseListener {
 				opNode = new LessThanOperation();
 				break;
 		}
-
 		if (opNode != null) {
 			opNode.addChild(left);
 			opNode.addChild(right);
@@ -208,14 +202,12 @@ public class ASTListener extends ICSSBaseListener {
 		for (int i = 1; i < ctx.term().size(); i++) {
 			Expression right = buildTerm(ctx.term(i));
 			String operator = ctx.getChild(2 * i - 1).getText();
-
 			Operation opNode = null;
 			if (operator.equals("+")) {
 				opNode = new AddOperation();
 			} else if (operator.equals("-")) {
 				opNode = new SubtractOperation();
 			}
-
 			if (opNode != null) {
 				opNode.addChild(left);
 				opNode.addChild(right);
@@ -224,7 +216,4 @@ public class ASTListener extends ICSSBaseListener {
 		}
 		return left;
 	}
-
-
-
 }

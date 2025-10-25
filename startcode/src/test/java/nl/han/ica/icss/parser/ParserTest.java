@@ -25,18 +25,37 @@ class ParserTest {
 	    CommonTokenStream tokens = new CommonTokenStream(lexer);
 
         ICSSParser parser = new ICSSParser(tokens);
-		parser.setErrorHandler(new BailErrorStrategy());
+		// TODO Change ErrorStrategy back after testing
+//		parser.setErrorHandler(new BailErrorStrategy());
+		parser.setErrorHandler(new DefaultErrorStrategy());
 
 		//Setup collection of the parse error messages
+//		BaseErrorListener errorListener = new BaseErrorListener() {
+//			private String message;
+//			public void syntaxError(Recognizer<?,?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+//				message = msg;
+//			}
+//			public String toString() {
+//				return message;
+//			}
+//		};
+
+		//TODO Change back to original ErrorListener after testing.
 		BaseErrorListener errorListener = new BaseErrorListener() {
-			private String message;
-			public void syntaxError(Recognizer<?,?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-				message = msg;
+			private String message = null;
+
+			@Override
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+									int line, int charPositionInLine, String msg, RecognitionException e) {
+				message = "line " + line + ":" + charPositionInLine + " " + msg;
 			}
+
+			@Override
 			public String toString() {
 				return message;
 			}
 		};
+
 		parser.removeErrorListeners();
 		parser.addErrorListener(errorListener);
 
@@ -47,36 +66,33 @@ class ParserTest {
             ParseTreeWalker walker = new ParseTreeWalker();
             walker.walk(listener, parseTree);
 		} catch(ParseCancellationException e) {
+			// TODO Remove println after testing
+			System.out.println("Parse error: " + errorListener.toString());
 			fail(errorListener.toString());
 		}
-
 		return listener.getAST();
 	}
 
 	@Test
 	void testParseLevel0() throws IOException {
-
 		AST sut = parseTestFile("level0.icss");
 		AST exp = Fixtures.uncheckedLevel0();
 		assertEquals(exp,sut);
 	}
 	@Test
 	void testParseLevel1() throws IOException {
-
 		AST sut = parseTestFile("level1.icss");
 		AST exp = Fixtures.uncheckedLevel1();
 		assertEquals(exp,sut);
 	}
 	@Test
 	void testParseLevel2() throws IOException {
-
 		AST sut = parseTestFile("level2.icss");
 		AST exp = Fixtures.uncheckedLevel2();
 		assertEquals(exp,sut);
 	}
 	@Test
 	void testParseLevel3() throws IOException {
-
 		AST sut = parseTestFile("level3.icss");
 		AST exp = Fixtures.uncheckedLevel3();
 		assertEquals(exp,sut);
