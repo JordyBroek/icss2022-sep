@@ -7,6 +7,7 @@ import nl.han.ica.icss.ast.operations.*;
 import nl.han.ica.icss.ast.selectors.ClassSelector;
 import nl.han.ica.icss.ast.selectors.IdSelector;
 import nl.han.ica.icss.ast.selectors.TagSelector;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 /**
  * This class extracts the ICSS Abstract Syntax Tree from the Antlr Parse tree.
@@ -87,7 +88,7 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	@Override
-	public void exitVariableAssignment(ICSSParser.VariableAssignmentContext ctx) {
+	public void enterVariableAssignment(ICSSParser.VariableAssignmentContext ctx) {
 		VariableAssignment varAssign = new VariableAssignment();
 		String varName = ctx.LOWER_IDENT() != null
 				? ctx.LOWER_IDENT().getText()
@@ -95,28 +96,19 @@ public class ASTListener extends ICSSBaseListener {
 		varAssign.name = new VariableReference(varName);
 		currentContainer.peek().addChild(varAssign);
 		enterNode(varAssign);
+	}
+
+	@Override
+	public void exitVariableAssignment(ICSSParser.VariableAssignmentContext ctx) {
 		exitNode();
 	}
 
 	@Override
 	public void exitExpression(ICSSParser.ExpressionContext ctx) {
-		Expression left = buildTerm(ctx.term(0));
-		for (int i = 1; i < ctx.term().size(); i++) {
-			Expression right = buildTerm(ctx.term(i));
-			String operator = ctx.getChild(2 * i - 1).getText();
-			Operation opNode = null;
-			if (operator.equals("+")) {
-				opNode = new AddOperation();
-			} else if (operator.equals("-")) {
-				opNode = new SubtractOperation();
-			}
-			if (opNode != null) {
-				opNode.addChild(left);
-				opNode.addChild(right);
-				left = opNode;
-			}
+		Expression expr = buildExpression(ctx);
+		if (expr != null) {
+			currentContainer.peek().addChild(expr);
 		}
-		currentContainer.peek().addChild(left);
 	}
 
 	private Expression buildTerm(ICSSParser.TermContext ctx) {
@@ -135,7 +127,11 @@ public class ASTListener extends ICSSBaseListener {
 		if (ctx.literal() != null) {
 			return buildLiteral(ctx.literal());
 		} else if (ctx.variableReference() != null) {
-			return new VariableReference(ctx.variableReference().LOWER_IDENT().getText());
+			if (ctx.variableReference().LOWER_IDENT() != null) {
+				return new VariableReference(ctx.variableReference().LOWER_IDENT().getText());
+			} else if (ctx.variableReference().CAPITAL_IDENT() != null) {
+				return new VariableReference(ctx.variableReference().CAPITAL_IDENT().getText());
+			}
 		} else if (ctx.boolLiteral() != null) {
 			return buildBoolLiteral(ctx.boolLiteral());
 		} else if (ctx.expression() != null) {
@@ -173,7 +169,23 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	@Override
+	public void enterElseClause(ICSSParser.ElseClauseContext ctx){
+		ElseClause elseClause = new ElseClause();
+		currentContainer.peek().addChild(elseClause);
+		enterNode(elseClause);
+	}
+
+	@Override
+	public void exitElseClause(ICSSParser.ElseClauseContext ctx){
+		exitNode();
+	}
+
+	@Override
 	public void exitComparisonExpression(ICSSParser.ComparisonExpressionContext ctx) {
+		if (ctx.expression(0) == null || ctx.expression(1) == null) {
+			return;
+		}
+
 		Expression left = buildExpression(ctx.expression(0));
 		Expression right = buildExpression(ctx.expression(1));
 		String operator = ctx.getChild(1).getText();
@@ -197,8 +209,10 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	private Expression buildExpression(ICSSParser.ExpressionContext ctx) {
+		if (ctx == null || ctx.term().isEmpty()) {
+			return null;
+		}
 		Expression left = buildTerm(ctx.term(0));
-
 		for (int i = 1; i < ctx.term().size(); i++) {
 			Expression right = buildTerm(ctx.term(i));
 			String operator = ctx.getChild(2 * i - 1).getText();

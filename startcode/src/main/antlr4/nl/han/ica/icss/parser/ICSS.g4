@@ -47,7 +47,7 @@ ASSIGNMENT_OPERATOR: ':=';
  LESSER_OPERATOR: '<';
 
 //--- PARSER: ---
-stylesheet: stylerule* EOF;
+stylesheet: (variableAssignment | stylerule)* EOF;
 stylerule: selector OPEN_BRACE blockstatement CLOSE_BRACE;
 
 selector: ID_IDENT | CLASS_IDENT | LOWER_IDENT;
@@ -55,15 +55,15 @@ selector: ID_IDENT | CLASS_IDENT | LOWER_IDENT;
 
 // Body
 blockstatement: statement*;
-statement: declaration | variableAssignment | conditional | expression;
+statement: declaration | variableAssignment | conditional | elseClause;
 
 declaration: LOWER_IDENT COLON expression SEMICOLON;
 variableAssignment: (LOWER_IDENT | CAPITAL_IDENT) ASSIGNMENT_OPERATOR expression SEMICOLON;
 
 conditional: IF BOX_BRACKET_OPEN conditionExpression BOX_BRACKET_CLOSE
-        OPEN_BRACE blockstatement CLOSE_BRACE
-        (ELSE OPEN_BRACE blockstatement CLOSE_BRACE)?;
+        OPEN_BRACE blockstatement CLOSE_BRACE;
 
+elseClause: ELSE OPEN_BRACE blockstatement CLOSE_BRACE;
 conditionExpression: boolLiteral | comparisonExpression | '(' conditionExpression ')';
 comparisonExpression: expression (EQUAL_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR) expression;
 
@@ -73,7 +73,7 @@ factor: literal | variableReference | boolLiteral | '(' expression ')';
 
 boolLiteral: TRUE | FALSE;
 literal: PIXELSIZE | PERCENTAGE | SCALAR | COLOR;
-variableReference: LOWER_IDENT;
+variableReference: LOWER_IDENT | CAPITAL_IDENT;
 
 
 

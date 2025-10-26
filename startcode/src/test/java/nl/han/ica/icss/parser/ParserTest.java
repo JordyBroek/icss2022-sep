@@ -26,35 +26,20 @@ class ParserTest {
 
         ICSSParser parser = new ICSSParser(tokens);
 		// TODO Change ErrorStrategy back after testing
-//		parser.setErrorHandler(new BailErrorStrategy());
-		parser.setErrorHandler(new DefaultErrorStrategy());
+		parser.setErrorHandler(new BailErrorStrategy());
+//		parser.setErrorHandler(new DefaultErrorStrategy());
 
 		//Setup collection of the parse error messages
-//		BaseErrorListener errorListener = new BaseErrorListener() {
-//			private String message;
-//			public void syntaxError(Recognizer<?,?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-//				message = msg;
-//			}
-//			public String toString() {
-//				return message;
-//			}
-//		};
-
-		//TODO Change back to original ErrorListener after testing.
 		BaseErrorListener errorListener = new BaseErrorListener() {
-			private String message = null;
-
-			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
-									int line, int charPositionInLine, String msg, RecognitionException e) {
-				message = "line " + line + ":" + charPositionInLine + " " + msg;
+			private String message;
+			public void syntaxError(Recognizer<?,?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+				message = msg;
 			}
-
-			@Override
 			public String toString() {
 				return message;
 			}
 		};
+
 
 		parser.removeErrorListeners();
 		parser.addErrorListener(errorListener);
