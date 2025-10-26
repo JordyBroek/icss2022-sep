@@ -1,5 +1,6 @@
 package nl.han.ica.icss.parser;
 
+import nl.han.ica.datastructures.HANStack;
 import nl.han.ica.datastructures.IHANStack;
 import nl.han.ica.icss.ast.*;
 import nl.han.ica.icss.ast.literals.*;
@@ -7,7 +8,9 @@ import nl.han.ica.icss.ast.operations.*;
 import nl.han.ica.icss.ast.selectors.ClassSelector;
 import nl.han.ica.icss.ast.selectors.IdSelector;
 import nl.han.ica.icss.ast.selectors.TagSelector;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.antlr.v4.runtime.ParserRuleContext;
+
+import java.util.List;
 
 /**
  * This class extracts the ICSS Abstract Syntax Tree from the Antlr Parse tree.
@@ -50,24 +53,25 @@ public class ASTListener extends ICSSBaseListener {
 	public void enterStylerule(ICSSParser.StyleruleContext ctx) {
 		Stylerule rule = new Stylerule();
 
-		ICSSParser.SelectorContext selectorCtx = ctx.selector();
-		Selector selector = null;
+		for (ICSSParser.SelectorContext selectorCtx : ctx.selector()) {
+			Selector selector = null;
 
-		if (selectorCtx.ID_IDENT() != null) {
-			selector = new IdSelector(selectorCtx.ID_IDENT().getText());
-		} else if (selectorCtx.CLASS_IDENT() != null) {
-			selector = new ClassSelector(selectorCtx.CLASS_IDENT().getText());
-		} else if (selectorCtx.LOWER_IDENT() != null) {
-			selector = new TagSelector(selectorCtx.LOWER_IDENT().getText());
+			if (selectorCtx.classSelector() != null) {
+				selector = new ClassSelector(selectorCtx.classSelector().getText());
+			} else if (selectorCtx.idSelector() != null) {
+				selector = new IdSelector(selectorCtx.idSelector().getText());
+			} else if (selectorCtx.tagSelector() != null) {
+				selector = new TagSelector(selectorCtx.tagSelector().getText());
+			}
+
+			if (selector != null) {
+				rule.addChild(selector);
+			}
 		}
-
-		if (selector != null) {
-			rule.addChild(selector);
-		}
-
 		currentContainer.peek().addChild(rule);
 		enterNode(rule);
 	}
+
 
 	@Override
 	public void exitStylerule(ICSSParser.StyleruleContext ctx) {
@@ -112,9 +116,16 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	private Expression buildTerm(ICSSParser.TermContext ctx) {
-		Expression left = buildFactor(ctx.factor(0));
-		for (int i = 1; i < ctx.factor().size(); i++) {
-			Expression right = buildFactor(ctx.factor(i));
+		List<ICSSParser.FactorContext> factors = ctx.factor();
+		if (factors.isEmpty()) {
+			return null;
+		}
+
+		Expression left = buildFactor(factors.get(0));
+		for (int i = 1; i < factors.size(); i++) {
+			Expression right = buildFactor(factors.get(i));
+			if (left == null || right == null) continue;
+
 			MultiplyOperation op = new MultiplyOperation();
 			op.addChild(left);
 			op.addChild(right);
@@ -124,31 +135,35 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	private Expression buildFactor(ICSSParser.FactorContext ctx) {
-		if (ctx.literal() != null) {
-			return buildLiteral(ctx.literal());
+		if (ctx.pixelLiteral() != null) {
+			return new PixelLiteral(ctx.pixelLiteral().getText());
+		} else if (ctx.colorLiteral() != null) {
+			return new ColorLiteral(ctx.colorLiteral().getText());
+		} else if (ctx.percentageLiteral() != null) {
+			return new PercentageLiteral(ctx.percentageLiteral().getText());
+		} else if (ctx.scalarLiteral() != null) {
+			return new ScalarLiteral(ctx.scalarLiteral().getText());
+		} else if (ctx.boolLiteral() != null) {
+			return buildBoolLiteral(ctx.boolLiteral());
 		} else if (ctx.variableReference() != null) {
 			if (ctx.variableReference().LOWER_IDENT() != null) {
 				return new VariableReference(ctx.variableReference().LOWER_IDENT().getText());
 			} else if (ctx.variableReference().CAPITAL_IDENT() != null) {
 				return new VariableReference(ctx.variableReference().CAPITAL_IDENT().getText());
 			}
-		} else if (ctx.boolLiteral() != null) {
-			return buildBoolLiteral(ctx.boolLiteral());
-		} else if (ctx.expression() != null) {
-			return buildExpression(ctx.expression());
 		}
 		return null;
 	}
 
-	private Literal buildLiteral(ICSSParser.LiteralContext ctx) {
-		if (ctx.PIXELSIZE() != null)
-			return new PixelLiteral(ctx.PIXELSIZE().getText());
-		if (ctx.PERCENTAGE() != null)
-			return new PercentageLiteral(ctx.PERCENTAGE().getText());
-		if (ctx.SCALAR() != null)
-			return new ScalarLiteral(ctx.SCALAR().getText());
-		if (ctx.COLOR() != null)
-			return new ColorLiteral(ctx.COLOR().getText());
+	private Literal buildLiteral(ParserRuleContext ctx) {
+		if (ctx instanceof ICSSParser.PixelLiteralContext)
+			return new PixelLiteral(ctx.getText());
+		if (ctx instanceof ICSSParser.PercentageLiteralContext)
+			return new PercentageLiteral(ctx.getText());
+		if (ctx instanceof ICSSParser.ScalarLiteralContext)
+			return new ScalarLiteral(ctx.getText());
+		if (ctx instanceof ICSSParser.ColorLiteralContext)
+			return new ColorLiteral(ctx.getText());
 		return null;
 	}
 
@@ -159,6 +174,21 @@ public class ASTListener extends ICSSBaseListener {
 	@Override
 	public void enterConditional(ICSSParser.ConditionalContext ctx) {
 		IfClause ifClause = new IfClause();
+		ICSSParser.AttributeContext attctx = ctx.attribute();
+		Expression condition = null;
+
+		if(attctx.variableReference() != null) {
+			if(attctx.variableReference().LOWER_IDENT() != null) {
+				condition = new VariableReference(attctx.variableReference().LOWER_IDENT().getText());
+			} else if (attctx.variableReference().CAPITAL_IDENT() != null) {
+				condition = new VariableReference(attctx.variableReference().CAPITAL_IDENT().getText());
+			}
+		} else if (attctx.boolLiteral() != null) {
+			condition = buildBoolLiteral(attctx.boolLiteral());
+		}
+		if(condition != null) {
+			ifClause.addChild(condition);
+		}
 		currentContainer.peek().addChild(ifClause);
 		enterNode(ifClause);
 	}
@@ -180,41 +210,17 @@ public class ASTListener extends ICSSBaseListener {
 		exitNode();
 	}
 
-	@Override
-	public void exitComparisonExpression(ICSSParser.ComparisonExpressionContext ctx) {
-		if (ctx.expression(0) == null || ctx.expression(1) == null) {
-			return;
-		}
-
-		Expression left = buildExpression(ctx.expression(0));
-		Expression right = buildExpression(ctx.expression(1));
-		String operator = ctx.getChild(1).getText();
-		Operation opNode = null;
-		switch (operator) {
-			case "==":
-				opNode = new EqualOperation();
-				break;
-			case ">":
-				opNode = new GreaterThanOperation();
-				break;
-			case "<":
-				opNode = new LessThanOperation();
-				break;
-		}
-		if (opNode != null) {
-			opNode.addChild(left);
-			opNode.addChild(right);
-			currentContainer.peek().addChild(opNode);
-		}
-	}
-
 	private Expression buildExpression(ICSSParser.ExpressionContext ctx) {
-		if (ctx == null || ctx.term().isEmpty()) {
+		List<ICSSParser.TermContext> terms = ctx.term();
+		if (terms.isEmpty()) {
 			return null;
 		}
-		Expression left = buildTerm(ctx.term(0));
-		for (int i = 1; i < ctx.term().size(); i++) {
-			Expression right = buildTerm(ctx.term(i));
+
+		Expression left = buildTerm(terms.get(0));
+		for (int i = 1; i < terms.size(); i++) {
+			Expression right = buildTerm(terms.get(i));
+			if (left == null || right == null) continue;
+
 			String operator = ctx.getChild(2 * i - 1).getText();
 			Operation opNode = null;
 			if (operator.equals("+")) {
@@ -222,6 +228,7 @@ public class ASTListener extends ICSSBaseListener {
 			} else if (operator.equals("-")) {
 				opNode = new SubtractOperation();
 			}
+
 			if (opNode != null) {
 				opNode.addChild(left);
 				opNode.addChild(right);

@@ -61,7 +61,9 @@ public class ASTNode {
 		builder.append(getNodeLabel());	
 		builder.append("|");
 		for(ASTNode child : getChildren()) {
-			child.toString(builder);
+            if (child != null) {
+                    child.toString(builder);
+            }
 		}	
 		builder.append("]");
 	}

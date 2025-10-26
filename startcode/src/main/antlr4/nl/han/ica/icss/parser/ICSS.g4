@@ -42,37 +42,39 @@ MUL: '*';
 ASSIGNMENT_OPERATOR: ':=';
 
 // Conditionals
- EQUAL_OPERATOR: '==';
- GREATER_OPERATOR: '>';
- LESSER_OPERATOR: '<';
+// EQUAL_OPERATOR: '==';
+// GREATER_OPERATOR: '>';
+// LESSER_OPERATOR: '<';
 
 //--- PARSER: ---
 stylesheet: (variableAssignment | stylerule)* EOF;
-stylerule: selector OPEN_BRACE blockstatement CLOSE_BRACE;
+stylerule: selector+ OPEN_BRACE statement CLOSE_BRACE;
 
-selector: ID_IDENT | CLASS_IDENT | LOWER_IDENT;
-
+selector: (classSelector | idSelector | tagSelector) | selector attribute;
+classSelector: CLASS_IDENT;
+idSelector: ID_IDENT;
+tagSelector: LOWER_IDENT | CAPITAL_IDENT;
 
 // Body
-blockstatement: statement*;
-statement: declaration | variableAssignment | conditional | elseClause;
-
-declaration: LOWER_IDENT COLON expression SEMICOLON;
+statement: (declaration | variableAssignment | conditional | elseClause)*;
+attribute: BOX_BRACKET_OPEN (variableReference | boolLiteral) BOX_BRACKET_CLOSE;
+declaration: LOWER_IDENT COLON expression+ SEMICOLON;
 variableAssignment: (LOWER_IDENT | CAPITAL_IDENT) ASSIGNMENT_OPERATOR expression SEMICOLON;
 
-conditional: IF BOX_BRACKET_OPEN conditionExpression BOX_BRACKET_CLOSE
-        OPEN_BRACE blockstatement CLOSE_BRACE;
-
-elseClause: ELSE OPEN_BRACE blockstatement CLOSE_BRACE;
-conditionExpression: boolLiteral | comparisonExpression | '(' conditionExpression ')';
-comparisonExpression: expression (EQUAL_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR) expression;
+conditional: IF attribute OPEN_BRACE statement CLOSE_BRACE elseClause?;
+elseClause: ELSE OPEN_BRACE statement CLOSE_BRACE;
+//conditionExpression: boolLiteral | comparisonExpression | '(' conditionExpression ')';
+//comparisonExpression: expression (EQUAL_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR) expression;
 
 expression: term ((PLUS | MIN) term)*;
 term: factor ((MUL) factor)*;
-factor: literal | variableReference | boolLiteral | '(' expression ')';
+factor: pixelLiteral | scalarLiteral | percentageLiteral | colorLiteral | variableReference | boolLiteral;
 
 boolLiteral: TRUE | FALSE;
-literal: PIXELSIZE | PERCENTAGE | SCALAR | COLOR;
+pixelLiteral: PIXELSIZE;
+colorLiteral: COLOR;
+percentageLiteral: PERCENTAGE;
+scalarLiteral: SCALAR;
 variableReference: LOWER_IDENT | CAPITAL_IDENT;
 
 

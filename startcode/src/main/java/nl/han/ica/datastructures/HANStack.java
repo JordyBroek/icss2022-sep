@@ -1,6 +1,5 @@
-package nl.han.ica.icss.ast;
+package nl.han.ica.datastructures;
 
-import nl.han.ica.datastructures.IHANStack;
 import java.util.ArrayList;
 
 public class HANStack<T> implements IHANStack<T> {

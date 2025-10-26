@@ -25,9 +25,7 @@ class ParserTest {
 	    CommonTokenStream tokens = new CommonTokenStream(lexer);
 
         ICSSParser parser = new ICSSParser(tokens);
-		// TODO Change ErrorStrategy back after testing
 		parser.setErrorHandler(new BailErrorStrategy());
-//		parser.setErrorHandler(new DefaultErrorStrategy());
 
 		//Setup collection of the parse error messages
 		BaseErrorListener errorListener = new BaseErrorListener() {
@@ -51,8 +49,6 @@ class ParserTest {
             ParseTreeWalker walker = new ParseTreeWalker();
             walker.walk(listener, parseTree);
 		} catch(ParseCancellationException e) {
-			// TODO Remove println after testing
-			System.out.println("Parse error: " + errorListener.toString());
 			fail(errorListener.toString());
 		}
 		return listener.getAST();
