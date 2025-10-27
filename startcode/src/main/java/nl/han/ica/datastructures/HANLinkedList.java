@@ -15,7 +15,7 @@ public class HANLinkedList<T> implements IHANLinkedList<T> {
 
     @Override
     public void addFirst(T value) {
-        insert(0, value);
+        head = new LinkedListNode<>(value, head);
         size++;
     }
 
@@ -30,7 +30,8 @@ public class HANLinkedList<T> implements IHANLinkedList<T> {
         if (index < 0 || index > size)
             throw new IndexOutOfBoundsException();
         if (index == 0) {
-            addFirst(value);
+            head = new LinkedListNode<>(value, head);
+            size++;
             return;
         }
         LinkedListNode<T> prevNode = getNode(index - 1);
