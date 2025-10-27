@@ -27,6 +27,7 @@ CLASS_IDENT: '.' [a-z0-9\-]+;
 //General identifiers
 LOWER_IDENT: [a-z] [a-z0-9\-]*;
 CAPITAL_IDENT: [A-Z] [A-Za-z0-9_]*;
+VAR_IDENT: [a-zA-Z] [a-zA-Z0-9_-]*;
 
 //All whitespace is skipped
 WS: [ \t\r\n]+ -> skip;
@@ -41,16 +42,11 @@ MIN: '-';
 MUL: '*';
 ASSIGNMENT_OPERATOR: ':=';
 
-// Conditionals
-// EQUAL_OPERATOR: '==';
-// GREATER_OPERATOR: '>';
-// LESSER_OPERATOR: '<';
-
 //--- PARSER: ---
 stylesheet: (variableAssignment | stylerule)* EOF;
-stylerule: selector+ OPEN_BRACE statement CLOSE_BRACE;
+stylerule: selector OPEN_BRACE statement CLOSE_BRACE;
 
-selector: (classSelector | idSelector | tagSelector) | selector attribute;
+selector: classSelector | idSelector | tagSelector;
 classSelector: CLASS_IDENT;
 idSelector: ID_IDENT;
 tagSelector: LOWER_IDENT | CAPITAL_IDENT;
@@ -59,12 +55,10 @@ tagSelector: LOWER_IDENT | CAPITAL_IDENT;
 statement: (declaration | variableAssignment | conditional | elseClause)*;
 attribute: BOX_BRACKET_OPEN (variableReference | boolLiteral) BOX_BRACKET_CLOSE;
 declaration: LOWER_IDENT COLON expression+ SEMICOLON;
-variableAssignment: (LOWER_IDENT | CAPITAL_IDENT) ASSIGNMENT_OPERATOR expression SEMICOLON;
+variableAssignment: VAR_IDENT ASSIGNMENT_OPERATOR expression SEMICOLON;
 
 conditional: IF attribute OPEN_BRACE statement CLOSE_BRACE elseClause?;
 elseClause: ELSE OPEN_BRACE statement CLOSE_BRACE;
-//conditionExpression: boolLiteral | comparisonExpression | '(' conditionExpression ')';
-//comparisonExpression: expression (EQUAL_OPERATOR | GREATER_OPERATOR | LESSER_OPERATOR) expression;
 
 expression: term ((PLUS | MIN) term)*;
 term: factor ((MUL) factor)*;
@@ -75,7 +69,7 @@ pixelLiteral: PIXELSIZE;
 colorLiteral: COLOR;
 percentageLiteral: PERCENTAGE;
 scalarLiteral: SCALAR;
-variableReference: LOWER_IDENT | CAPITAL_IDENT;
+variableReference: VAR_IDENT;
 
 
 

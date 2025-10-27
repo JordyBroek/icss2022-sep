@@ -1,93 +1,75 @@
 package nl.han.ica.datastructures;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-public class HANLinkedList<T> implements IHANLinkedList<T> {
+public class HANLinkedList<T> implements IHANLinkedList<T>{
 
     private LinkedListNode<T> head;
     private int size;
 
-    public HANLinkedList() {
+    public HANLinkedList(){
         head = new LinkedListNode<>();
         size = 0;
     }
 
     @Override
-    public void addFirst(T value) {
+    public void addFirst(T value){
         head = new LinkedListNode<>(value, head);
         size++;
     }
 
+
     @Override
-    public void clear() {
+    public void clear(){
         head = null;
         size = 0;
     }
 
     @Override
-    public void insert(int index, T value) {
-        if (index < 0 || index > size)
-            throw new IndexOutOfBoundsException();
-        if (index == 0) {
-            head = new LinkedListNode<>(value, head);
-            size++;
-            return;
-        }
+    public void insert(int index, T value){
         LinkedListNode<T> prevNode = getNode(index - 1);
-        LinkedListNode<T> newNode = new LinkedListNode<>(value, prevNode.next);
-        newNode.next = prevNode.next;
-        prevNode.next = newNode;
-        size++;
+        if (prevNode != null) {
+            prevNode.next = new LinkedListNode<>(value, prevNode.next);
+            size++;
+        }
     }
 
     @Override
-    public void delete(int pos) {
-        if (pos < 0 || pos >= size)
-            throw new IndexOutOfBoundsException();
-        if (pos == 0) {
-            removeFirst();
-            return;
-        }
+    public void delete(int pos){
         LinkedListNode<T> prev = getNode(pos - 1);
-        prev.next = prev.next.next;
+        LinkedListNode<T> nodeToDelete = prev.next;
+        prev.next = nodeToDelete.next;
         size--;
     }
 
     @Override
-    public T get(int pos) {
-        if (pos < 0 || pos >= size)
-            throw new IndexOutOfBoundsException();
-
-        return getNode(pos).value;
+    public T get(int pos){
+        LinkedListNode<T> node = getNode(pos);
+        return node.value;
     }
 
     @Override
-    public void removeFirst() {
-        if (head == null) {
-            throw new NoSuchElementException();
-        }
-        head = head.next;
+    public void removeFirst(){
+        LinkedListNode<T> firstNode = getNode(0);
+        head.next = firstNode.next;
         size--;
     }
 
     @Override
-    public T getFirst() {
-        if (head == null)
-            throw new NoSuchElementException();
-        return head.value;
+    public T getFirst(){
+        LinkedListNode<T> firstNode = getNode(0);
+        return firstNode.value;
     }
 
     @Override
-    public int getSize() {
+    public int getSize(){
         return size;
     }
 
-    private LinkedListNode<T> getNode(int index) {
-        LinkedListNode<T> current = head;
-        for (int i = 0; i < index; i++)
-            current = current.next;
-        return current;
+    private LinkedListNode<T> getNode(int pos){
+        LinkedListNode<T> currentNode = head;
+        for (int i = 0; i < pos; i++) {
+            currentNode = currentNode.next;
+        }
+        return currentNode;
     }
 
     public String toString(){
@@ -96,27 +78,6 @@ public class HANLinkedList<T> implements IHANLinkedList<T> {
             str.append(getNode(i).value).append(" ");
         }
         return str.toString();
-    }
-
-    @Override
-    public Iterator<T> iterator() {
-        return new Iterator<T>() {
-            private LinkedListNode<T> current = head;
-
-            @Override
-            public boolean hasNext() {
-                return current != null;
-            }
-
-            @Override
-            public T next() {
-                if (!hasNext())
-                    throw new NoSuchElementException();
-                T value = current.value;
-                current = current.next;
-                return value;
-            }
-        };
     }
 }
 

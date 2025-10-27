@@ -84,7 +84,7 @@ public class Checker {
 
     private void checkIfClause(IfClause ifClause){
         if (getExpressionType(ifClause.conditionalExpression) != ExpressionType.BOOL){
-            ifClause.setError("At if clause " + ifClause.getConditionalExpression().getNodeLabel() + " --- The condition must be a boolean");
+            ifClause.setError("At if clause " + ifClause.getConditionalExpression().getNodeLabel() + " - The condition must be a boolean");
         }
     }
 
@@ -114,7 +114,7 @@ public class Checker {
 
     private void checkPercentageOrPixelDeclaration(Declaration declaration, ExpressionType expressionType){
         if (expressionType != ExpressionType.PERCENTAGE && expressionType != ExpressionType.PIXEL){
-            declaration.setError("At property " + declaration.property.name + " - Value must be either a percentage, pixel or scalar");
+            declaration.setError("At property " + declaration.property.name + " - Value must be either a percentage or pixel");
         }
     }
 
