@@ -77,7 +77,7 @@ public class Evaluator implements Transform {
                     ifClause.elseClause.body = new ArrayList<>();
                 }
             }
-            transformIfClause(depth, ifClause, transformedRule)
+            transformIfClause(depth, ifClause, transformedRule);
         }
     }
 
